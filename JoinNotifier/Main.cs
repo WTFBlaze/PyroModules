@@ -1,9 +1,12 @@
 ﻿using MelonLoader;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PyroMod;
 using PyroMod.API.QuickMenu;
 using System;
 using System.Collections;
 using System.IO;
+using System.Net;
 using System.Reflection;
 using UnhollowerRuntimeLib;
 using UnityEngine;
@@ -42,6 +45,21 @@ namespace JoinNotifier
         public override void OnApplicationStart()
         {
             Module = PyroMod.Main.RegisterModule("Join Notifier", "1.0.0", "WTFBlaze", ConsoleColor.Blue, "https://github.com/WTFBlaze/PyroModules");
+            using (WebClient webClient = new WebClient())
+            {
+                var data = webClient.DownloadString("https://cdn.wtfblaze.com/mods/Mods.json");
+                var result = JsonConvert.DeserializeObject<JToken>(data);
+                foreach (var item in result)
+                {
+                    if ((string)item["Name"] == "PyroMod")
+                    {
+                        if ((string)item["Version"] == PyroBuildInfo.Version)
+                            Module.Logger.Log("Join Notifier is up to date!");
+                        else
+                            Module.Logger.Warning($"Your are running an outdated version of Join Notifier! Latest Version: {(string)result["Version"]} | Your Version: {PyroBuildInfo.Version}. You can download the latest version from the official repo. https://github.com/WTFBlaze/PyroModules/releases");
+                    }
+                }
+            }
             Module.CreateCategory("Join Notifier");
             Module.AddHook_QMInitialized(nameof(QMInitialized));
             Module.AddHook_PlayerJoined(nameof(PlayerJoined));
